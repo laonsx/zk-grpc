@@ -7,7 +7,7 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 )
 
-const schema = "go-modian"
+const schema = "gozk"
 
 var swg sync.WaitGroup
 var register = make(chan struct{})
