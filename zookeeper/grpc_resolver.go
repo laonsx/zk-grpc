@@ -7,14 +7,9 @@ import (
 	"google.golang.org/grpc/resolver"
 )
 
-const (
-	grpcScheme  = "grpczk"
-	GrpcDialUrl = "grpczk:///zookeeper.grpc.io"
-)
-
-func NewGrpcResolver(target, sever string) resolver.Builder {
-
-	return &GrpcResolver{Target: target, Server: sever}
+func InitGrpcDialUrl(target, server string) string {
+	resolver.Register(&GrpcResolver{Target: target, Server: server})
+	return server + ":///zookeeper.grpc.io"
 }
 
 type GrpcResolver struct {
@@ -75,7 +70,7 @@ func (r *GrpcResolver) watch() {
 			r.updateState(addrs)
 		} else {
 
-			log.Println(grpcScheme, "watch", err)
+			log.Println(r.Server, "watch", err)
 		}
 
 		for ev := range wch {
@@ -90,7 +85,7 @@ func (r *GrpcResolver) watch() {
 
 func (r *GrpcResolver) Scheme() string {
 
-	return grpcScheme
+	return r.Server
 }
 
 func (r *GrpcResolver) ResolveNow(rn resolver.ResolveNowOption) {}

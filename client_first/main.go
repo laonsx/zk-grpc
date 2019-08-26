@@ -9,7 +9,6 @@ import (
 
 	"google.golang.org/grpc"
 	ecpb "google.golang.org/grpc/examples/features/proto/echo"
-	"google.golang.org/grpc/resolver"
 )
 
 func callUnaryEcho(c ecpb.EchoClient, message string) {
@@ -37,12 +36,7 @@ func makeRPCs(hwc ecpb.EchoClient, n int) {
 
 func main() {
 
-	resolver.Register(zookeeper.NewGrpcResolver("localhost:2181", "zk"))
-
-	pickfirstConn, err := grpc.Dial(
-		zookeeper.GrpcDialUrl,
-		grpc.WithInsecure(),
-	)
+	pickfirstConn, err := grpc.Dial(zookeeper.InitGrpcDialUrl("localhost:2181", "zk"), grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 
 		log.Fatalf("did not connect: %v", err)

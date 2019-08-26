@@ -41,11 +41,11 @@ func (s *ecServer) BidirectionalStreamingEcho(ecpb.Echo_BidirectionalStreamingEc
 	return status.Errorf(codes.Unimplemented, "not implemented")
 }
 
-func startServer(addr string, sleep time.Duration) {
+func startServer(addr, server string, sleep time.Duration) {
 
 	time.Sleep(sleep)
 
-	fmt.Println("regitster", zookeeper.Register("localhost:2181", "zk", addr))
+	fmt.Println("regitster", zookeeper.Register("localhost:2181", server, addr))
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 
@@ -66,8 +66,16 @@ func startServer(addr string, sleep time.Duration) {
 func main() {
 
 	for i := 0; i < 10; i++ {
+
 		addr := fmt.Sprintf("127.0.0.1:%d", 50000+i)
-		go startServer(addr, time.Duration(15*i)*time.Second)
+
+		if i%2 == 0 {
+
+			go startServer(addr, "zk", time.Duration(15*i)*time.Second)
+		} else {
+
+			go startServer(addr, "kz", time.Duration(15*i)*time.Second)
+		}
 	}
 
 	defer zookeeper.UnRegister()
