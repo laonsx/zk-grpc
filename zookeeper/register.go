@@ -2,19 +2,17 @@ package zookeeper
 
 import (
 	"log"
-	"sync"
 
 	"github.com/samuel/go-zookeeper/zk"
 )
 
 const schema = "gozk"
 
-var swg sync.WaitGroup
-var register = make(chan struct{})
+var paths []string
 
 func Register(target, server, value string) error {
 
-	zkc, err := InitConn(target)
+	_, err := InitConn(target)
 	if err != nil {
 
 		return err
@@ -45,27 +43,24 @@ func Register(target, server, value string) error {
 
 	log.Println("register =>", path)
 
-	swg.Add(1)
-
-	go func() {
-
-		for range register {
-		}
-
-		err := zkc.Delete(path, -1)
-		if err == nil {
-
-			log.Println("unregister =>", path)
-		}
-
-		swg.Done()
-	}()
+	paths = append(paths, path)
 
 	return nil
 }
 
 func UnRegister() {
 
-	close(register)
-	swg.Wait()
+	if zkc == nil {
+
+		return
+	}
+
+	for _, path := range paths {
+
+		err := zkc.Delete(path, -1)
+		if err == nil {
+
+			log.Println("unregister =>", path)
+		}
+	}
 }

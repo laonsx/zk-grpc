@@ -4,45 +4,61 @@ import (
 	"errors"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/samuel/go-zookeeper/zk"
 )
 
+var once sync.Once
+var zkc *zk.Conn
+
 func InitConn(target string) (*zk.Conn, error) {
 
-	addrs := strings.Split(target, ",")
-	zkc, events, err := zk.Connect(addrs, time.Second*5)
-	if err != nil {
+	once.Do(func() {
 
-		return nil, err
-	}
+		addrs := strings.Split(target, ",")
+		zkConn, events, err := zk.Connect(addrs, time.Second*5)
+		if err != nil {
 
-	for {
+			log.Println("zk connect err " + err.Error())
 
-		isConnected := false
-		select {
+			return
+		}
 
-		case connEvent := <-events:
+		for {
 
-			if connEvent.State == zk.StateConnected {
+			isConnected := false
+			select {
 
-				isConnected = true
-				log.Println("connect to zookeeper server success!")
+			case connEvent := <-events:
+
+				if connEvent.State == zk.StateConnected {
+
+					isConnected = true
+					log.Println("connect to zookeeper server success!")
+				}
+
+			case <-time.After(time.Second * 5):
+
+				log.Println("connect to zookeeper server timeout!")
 			}
 
-		case _ = <-time.After(time.Second * 5):
+			if isConnected {
 
-			log.Println("connect to zookeeper server timeout!")
-
-			return nil, errors.New("connect to zookeeper server timeout!")
+				break
+			}
 		}
 
-		if isConnected {
+		zkc = zkConn
+	})
 
-			break
-		}
+	if zkc == nil {
+
+		return nil, InitZkcErr
 	}
 
 	return zkc, nil
 }
+
+var InitZkcErr = errors.New("zkc init err")
