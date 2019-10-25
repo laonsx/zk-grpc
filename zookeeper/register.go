@@ -6,9 +6,17 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 )
 
-const schema = "gozk"
+var schema = "gozk"
 
 var paths []string
+
+func SetSchema(s string) {
+
+	if s != "" {
+
+		schema = s
+	}
+}
 
 func Register(target, server, value string) error {
 
